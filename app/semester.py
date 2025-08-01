@@ -60,3 +60,55 @@ def delete_semester(
     db.delete(semester)
     db.commit()
     return {"message": "Semester deleted successfully"}
+
+@router.get("/cgpa")
+def get_cgpa(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Calculate and return the current CGPA based on all semesters"""
+    semesters = db.query(Semester).filter(Semester.user_id == user.id).all()
+    
+    if not semesters:
+        return {
+            "cgpa": 0.0,
+            "total_credits": 0,
+            "semester_count": 0,
+            "message": "No semester data available"
+        }
+    
+    total_grade_points = 0
+    total_credits = 0
+    
+    for semester in semesters:
+        # Calculate grade points for this semester (GPA * credits)
+        grade_points = semester.gpa * semester.credits
+        total_grade_points += grade_points
+        total_credits += semester.credits
+    
+    if total_credits == 0:
+        cgpa = 0.0
+    else:
+        cgpa = total_grade_points / total_credits
+    
+    # Get the most recent semester for comparison
+    latest_semester = max(semesters, key=lambda s: s.id) if semesters else None
+    previous_cgpa = 0.0
+    
+    if len(semesters) > 1:
+        # Calculate CGPA without the latest semester
+        other_semesters = [s for s in semesters if s.id != latest_semester.id]
+        other_grade_points = sum(s.gpa * s.credits for s in other_semesters)
+        other_credits = sum(s.credits for s in other_semesters)
+        if other_credits > 0:
+            previous_cgpa = other_grade_points / other_credits
+    
+    cgpa_change = cgpa - previous_cgpa
+    
+    return {
+        "cgpa": round(cgpa, 2),
+        "total_credits": total_credits,
+        "semester_count": len(semesters),
+        "change": round(cgpa_change, 2),
+        "latest_semester": latest_semester.name if latest_semester else None
+    }
