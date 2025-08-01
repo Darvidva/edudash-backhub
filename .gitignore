@@ -1,0 +1,31 @@
+# 🐍 Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# 📦 Virtual environment
+venv/
+ENV/
+env/
+
+# 🔐 Environment variables
+.env
+.env.*
+
+# 🗃 SQLite or other local DBs (if used)
+*.sqlite3
+*.db
+
+# 🐘 PostgreSQL (optional dump)
+*.sql
+
+# 📁 IDEs & editors
+.vscode/
+.idea/
+
+# 🔧 OS or other system files
+.DS_Store
+Thumbs.db
