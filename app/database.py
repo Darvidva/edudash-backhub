@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
+from pymongo import MongoClient
 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,3 +31,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+client = MongoClient(MONGO_URI)
+db = client["academate"]  # Use your DB name

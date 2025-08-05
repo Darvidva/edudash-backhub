@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 
 class UserCreate(BaseModel):
@@ -6,18 +6,18 @@ class UserCreate(BaseModel):
     full_name: str
     email: EmailStr
     password: str
-    institution: str = None
+    institution: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
 class UserResponse(BaseModel):
-    id: int
+    id: str = Field(..., alias="_id")
     username: str
     email: EmailStr
-    full_name: str = None
-    institution: str = None
+    full_name: Optional[str]
+    institution: Optional[str]
 
     class Config:
         orm_mode = True
@@ -34,9 +34,7 @@ class CourseCreate(CourseBase):
     pass
 
 class CourseResponse(CourseBase):
-    id: int
-    class Config:
-        orm_mode = True
+    id: str = Field(..., alias="_id")
 
 class SemesterBase(BaseModel):
     name: str
@@ -45,8 +43,6 @@ class SemesterCreate(SemesterBase):
     courses: List[CourseCreate] = []
 
 class SemesterResponse(SemesterBase):
-    id: int
+    id: str = Field(..., alias="_id")
     courses: List[CourseResponse] = []
-    class Config:
-        orm_mode = True
 

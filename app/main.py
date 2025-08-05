@@ -1,13 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import auth, course, models, semester
-from .database import engine
+from . import auth, course, semester
 
 app = FastAPI()
-
-@app.on_event("startup")
-def on_startup():
-    models.Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,4 +18,4 @@ app.include_router(semester.router)
 
 @app.get("/")
 def root():
-    return {"message": "Academate API is running 🚀"}
+    return {"message": "Academate API (MongoDB) is running 🚀"}
