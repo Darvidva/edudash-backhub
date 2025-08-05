@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 class UserCreate(BaseModel):
     username: str
@@ -25,8 +25,9 @@ class UserResponse(BaseModel):
 class CourseBase(BaseModel):
     name: str
     code: str
-    credits: int
-    difficulty: str
+    grade: str
+    unit: int
+    difficulty: Optional[str] = None
     instructor: Optional[str] = None
 
 class CourseCreate(CourseBase):
@@ -37,16 +38,15 @@ class CourseResponse(CourseBase):
     class Config:
         orm_mode = True
 
-
 class SemesterBase(BaseModel):
     name: str
-    gpa: float
-    credits: int
 
 class SemesterCreate(SemesterBase):
-    pass
+    courses: List[CourseCreate] = []
 
 class SemesterResponse(SemesterBase):
     id: int
+    courses: List[CourseResponse] = []
     class Config:
         orm_mode = True
+
