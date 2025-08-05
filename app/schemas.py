@@ -19,9 +19,6 @@ class UserResponse(BaseModel):
     full_name: Optional[str]
     institution: Optional[str]
 
-    class Config:
-        orm_mode = True
-
 class CourseBase(BaseModel):
     name: str
     code: str

@@ -1,80 +1,49 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from . import schemas
-from .database import get_db
-from .token import verify_access_token
+from fastapi import APIRouter, Depends, HTTPException
+from .schemas import CourseCreate, CourseResponse
+from .database import db
+from .dependencies import get_current_user
+from bson import ObjectId
 
 router = APIRouter(
     prefix="/courses",
     tags=["Courses"]
 )
 
-# 🔐 This must match your login endpoint path
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-# ✅ Dependency to get current user from token
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> models.User:
-    payload = verify_access_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token."
-        )
-    user = db.query(models.User).filter(models.User.email == payload["sub"]).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found."
-        )
-    return user
-
-# 🚀 Add a new course
-@router.post("/", response_model=schemas.CourseResponse)
+@router.post("/", response_model=CourseResponse)
 def add_course(
-    course: schemas.CourseCreate,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user)
+    course: CourseCreate,
+    user=Depends(get_current_user)
 ):
-    new_course = models.Course(**course.dict(), user_id=user.id)
-    db.add(new_course)
-    db.commit()
-    db.refresh(new_course)
-    return new_course
+    course_doc = course.dict()
+    course_doc["user_id"] = str(user["_id"])
+    course_doc["_id"] = ObjectId()
+    db.courses.insert_one(course_doc)
+    course_doc["_id"] = str(course_doc["_id"])
+    return CourseResponse(**course_doc)
 
-# 📄 Get all courses for logged-in user
-@router.get("/", response_model=list[schemas.CourseResponse])
+@router.get("/", response_model=list[CourseResponse])
 def get_courses(
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user)
+    user=Depends(get_current_user)
 ):
-    return db.query(models.Course).filter_by(user_id=user.id).all()
+    courses = list(db.courses.find({"user_id": str(user["_id"])}))
+    for course in courses:
+        course["_id"] = str(course["_id"])
+    return [CourseResponse(**course) for course in courses]
 
-# ❌ Delete a course
 @router.delete("/{course_id}")
 def delete_course(
-    course_id: int,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user)
+    course_id: str,
+    user=Depends(get_current_user)
 ):
-    course = db.query(models.Course).filter_by(id=course_id, user_id=user.id).first()
-    if not course:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Course not found."
-        )
-    db.delete(course)
-    db.commit()
+    result = db.courses.delete_one({"_id": ObjectId(course_id), "user_id": str(user["_id"])})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Course not found")
     return {"message": "Course deleted"}
-
 
 @router.get("/count")
 def get_course_count(
-    db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user)
+    user=Depends(get_current_user)
 ):
-    count = db.query(models.Course).filter_by(user_id=user.id).count()
+    count = db.courses.count_documents({"user_id": str(user["_id"])})
     return {"total": count}
 
