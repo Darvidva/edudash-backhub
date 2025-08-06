@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, conint
 from typing import Optional, List
 
 class UserCreate(BaseModel):
@@ -22,7 +22,6 @@ class UserResponse(BaseModel):
 class CourseBase(BaseModel):
     name: str
     code: str
-    grade: str
     unit: int
     difficulty: Optional[str] = None
     instructor: Optional[str] = None
@@ -33,13 +32,32 @@ class CourseCreate(CourseBase):
 class CourseResponse(CourseBase):
     id: str = Field(..., alias="_id")
 
+# Per-semester course schema for CGPA projection
+class SemesterCourseBase(BaseModel):
+    name: str
+    grade: Optional[str] = None
+    unit: conint(ge=0)
+
+class SemesterCourseCreate(SemesterCourseBase):
+    pass
+
+class SemesterCourseResponse(SemesterCourseBase):
+    id: str = Field(..., alias="_id")
+
 class SemesterBase(BaseModel):
     name: str
 
 class SemesterCreate(SemesterBase):
-    courses: List[CourseCreate] = []
+    courses: List[SemesterCourseCreate] = []
 
 class SemesterResponse(SemesterBase):
     id: str = Field(..., alias="_id")
-    courses: List[CourseResponse] = []
+    courses: List[SemesterCourseResponse] = []
+
+class CGPASummaryResponse(BaseModel):
+    cgpa: float
+    total_credits: int
+    semester_count: int
+    change: float
+    latest_semester: Optional[str] = None
 
