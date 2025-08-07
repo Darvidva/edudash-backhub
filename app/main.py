@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import auth, course, semester
+from . import auth, course, semester, timetable
 from fastapi.routing import APIRoute
 
 app = FastAPI()
@@ -16,6 +16,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(course.router)
 app.include_router(semester.router)
+app.include_router(timetable.router)
 
 for route in app.routes:
     if isinstance(route, APIRoute):

@@ -61,3 +61,22 @@ class CGPASummaryResponse(BaseModel):
     change: float
     latest_semester: Optional[str] = None
 
+# Study Block schemas for timetable
+class StudyBlockBase(BaseModel):
+    title: str
+    course: str
+    startTime: str
+    endTime: str
+    day: int  # 1-7 (Monday-Sunday)
+    duration: int  # minutes
+    difficulty: str  # 'easy' | 'medium' | 'hard'
+    priority: str  # 'low' | 'medium' | 'high'
+    type: str  # 'lecture' | 'study' | 'assignment' | 'exam'
+    color: str
+
+class StudyBlockCreate(StudyBlockBase):
+    pass
+
+class StudyBlockResponse(StudyBlockBase):
+    id: str = Field(..., alias="_id")
+
