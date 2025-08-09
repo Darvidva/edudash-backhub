@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, conint
 from typing import Optional, List
+from datetime import datetime
 
 class UserCreate(BaseModel):
     username: str
@@ -79,4 +80,94 @@ class StudyBlockCreate(StudyBlockBase):
 
 class StudyBlockResponse(StudyBlockBase):
     id: str = Field(..., alias="_id")
+
+# Study Group schemas
+class StudyGroupBase(BaseModel):
+    name: str
+    description: str
+    course: str
+    max_members: int = 20
+    is_private: bool = False
+    access_code: Optional[str] = None
+
+class StudyGroupCreate(StudyGroupBase):
+    pass
+
+class StudyGroupResponse(StudyGroupBase):
+    id: str = Field(..., alias="_id")
+    creator_id: str
+    members: List[str] = []
+    member_count: int = 0
+    created_at: datetime
+    is_active: bool = True
+    last_activity: Optional[datetime] = None
+
+class StudyGroupJoin(BaseModel):
+    access_code: Optional[str] = None
+
+# Study Group Member schema
+class StudyGroupMemberBase(BaseModel):
+    user_id: str
+    group_id: str
+    role: str = "member"  # "creator", "admin", "member"
+
+class StudyGroupMemberResponse(StudyGroupMemberBase):
+    id: str = Field(..., alias="_id")
+    joined_at: datetime
+    user_info: Optional[dict] = None
+
+# Discussion schemas
+class DiscussionMessageBase(BaseModel):
+    content: str
+    group_id: str
+
+class DiscussionMessageCreate(DiscussionMessageBase):
+    pass
+
+class DiscussionMessageResponse(DiscussionMessageBase):
+    id: str = Field(..., alias="_id")
+    user_id: str
+    user_name: str
+    user_initials: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+# Resource schemas
+class GroupResourceBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    file_type: str
+    file_size: int
+    group_id: str
+
+class GroupResourceCreate(GroupResourceBase):
+    file_content: str  # Base64 encoded file content
+
+class GroupResourceResponse(GroupResourceBase):
+    id: str = Field(..., alias="_id")
+    uploaded_by: str
+    uploader_name: str
+    uploaded_at: datetime
+    download_url: str
+
+# Group Timetable Event schemas
+class GroupTimetableEventBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    group_id: str
+    start_time: datetime
+    end_time: datetime
+    location: Optional[str] = None
+    event_type: str = "study_session"  # "study_session", "meeting", "exam_prep", "project_work"
+
+class GroupTimetableEventCreate(GroupTimetableEventBase):
+    pass
+
+class GroupTimetableEventResponse(GroupTimetableEventBase):
+    id: str = Field(..., alias="_id")
+    created_by: str
+    creator_name: str
+    created_at: datetime
+    attendees: List[str] = []
+    attendee_count: int = 0
 
